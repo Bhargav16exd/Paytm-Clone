@@ -1,5 +1,6 @@
 import zod from "zod"
 import {User} from "../models/user.model.js"
+import {Account} from "../models/bank.model.js"
 import jwt from "jsonwebtoken"
 
 const signupSchema = zod.object({
@@ -37,19 +38,22 @@ const signUp = async (req,res)=>{
             firstName:body.firstName,
             lastName:body.lastName
         })
+
+        const userId = newUser._id
+
+        await Account.create({
+            customerId:userId,
+            balance: 1 + Math.random() * 10000
+        })
+
         await newUser.save()
     
-        const id = newUser._id
-    
-        const token = jwt.sign({
-            id
-        }, "THISISBIGSECRETKEY")
+
     
         return res
         .status(200)
         .json({
             message:"User Created Successfully",
-            token:token
         })
     } catch (error) {
         console.log("Error while creating user" , error)
