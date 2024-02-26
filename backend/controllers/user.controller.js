@@ -3,7 +3,13 @@ import {User} from "../models/user.model.js"
 import jwt from "jsonwebtoken"
 
 const signupSchema = zod.object({
-    username:zod.string().email(m ),
+    username:zod.string().email(),
+    password:zod.string(),
+    firstName:zod.string(),
+    lastName:zod.string(),
+})
+
+const updateProfileSchema = zod.object({
     password:zod.string(),
     firstName:zod.string(),
     lastName:zod.string(),
@@ -90,9 +96,64 @@ const signin = async(req,res)=>{
     
 }
 
+const updateProfile = async(req,res)=>{
+    try {
+
+        const body = req.body
+        const {success} = updateProfileSchema.safeParse(body)
+
+        if(!success){
+            return res.status(403).json({message:"Invalid Inputs"})
+        }
+
+        const user = await User.findByIdAndUpdate(req.id , {
+            firstName:body.firstName,
+            lastName:body.lastName,
+            password:body.password
+        },{new:true})
+
+        if(!user){
+            return res.status(403).json({message:"No Such user exist"})
+        }
+
+        res.json({
+            message: "Updated successfully"
+        })
+    
+        
+    } catch (error) {
+        
+        console.log(error)
+
+    }
+}
+
+
+const findPerson = async(req ,res)=>{
+
+    const filter = req.query.filter 
+
+    const users = await User.find({
+        $or:[{
+            firstName:{
+                "$regex":filter
+            },
+            lastName:{
+                "$regex":filter
+            }
+        }]
+    })
+
+    if(!users){
+        return res.status(400).json({message:"No Such users exist"})
+    }
+
+    return res.status(200).json({message:"Users Found Successfully" , data:users})
+}
 
 
 export {
     signUp,
-    signin
+    signin,
+    updateProfile
 }
